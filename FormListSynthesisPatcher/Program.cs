@@ -96,7 +96,10 @@ namespace MissivesSynthesisPatcher
                 {
                     // Create override only when modifications are needed to minimize patch size
                     var formlistOverride = state.PatchMod.FormLists.GetOrAddAsOverride(formlistGetter);
+<<<<<<< HEAD
                     // Remove in descending order to prevent index invalidation
+=======
+>>>>>>> 41f2e39bcee2244479940e5cf20c7502fae650e2
                     foreach (var index in itemsToRemove.OrderByDescending(x => x))
                     {
                         formlistOverride.Items.RemoveAt(index);
