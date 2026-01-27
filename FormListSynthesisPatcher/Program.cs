@@ -4,9 +4,11 @@ using Mutagen.Bethesda.Skyrim;
 
 namespace MissivesSynthesisPatcher
 {
+    // Represents a single removal rule for filtering form list items
     public class RemovalRule
     {
         public string EditorID { get; set; } = string.Empty;
+        // Optional plugin filter to restrict removal to specific mods
         public List<string>? Plugins { get; set; }
     }
 
@@ -17,6 +19,7 @@ namespace MissivesSynthesisPatcher
 
     public class Program
     {
+        // Lazy initialization to avoid loading settings until pipeline needs them
         static Lazy<PatcherSettings> Settings = null!;
 
         public static async Task<int> Main(string[] args)
@@ -33,11 +36,13 @@ namespace MissivesSynthesisPatcher
         public static void RunPatch(IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
         {
             var settings = Settings.Value;
+            // Track removed items for summary report at the end
             var removedItems = new List<(string FormlistEditorID, string ItemEditorID, string ItemFormKey)>();
             
             Console.WriteLine($"Rules to apply: {settings.EditorIdsToRemove.Count}");
             foreach (var rule in settings.EditorIdsToRemove)
             {
+                // Display plugin restriction if specified, otherwise apply rule globally
                 var pluginInfo = rule.Plugins != null && rule.Plugins.Count > 0 
                     ? $" from plugins: {string.Join(", ", rule.Plugins)}"
                     : "";
@@ -58,8 +63,10 @@ namespace MissivesSynthesisPatcher
                 }
 
                 int removedCount = 0;
+                // Store indices instead of removing directly to avoid index shifting during iteration
                 var itemsToRemove = new List<int>();
                 
+                // Iterate backwards to safely identify removal candidates
                 for (int i = formlistGetter.Items.Count - 1; i >= 0; i--)
                 {
                     var itemFormKey = formlistGetter.Items[i].FormKey;
@@ -70,6 +77,7 @@ namespace MissivesSynthesisPatcher
                     foreach (var rule in settings.EditorIdsToRemove)
                     {
                         bool editorIdMatches = itemEditorID.Contains(rule.EditorID, StringComparison.OrdinalIgnoreCase);
+                        // Plugins are optional; null or empty means match all plugins
                         bool pluginMatches = rule.Plugins == null || rule.Plugins.Count == 0 || 
                             rule.Plugins.Any(p => itemPlugin.Equals(p, StringComparison.OrdinalIgnoreCase));
 
@@ -86,8 +94,10 @@ namespace MissivesSynthesisPatcher
 
                 if (removedCount > 0)
                 {
+                    // Create override only when modifications are needed to minimize patch size
                     var formlistOverride = state.PatchMod.FormLists.GetOrAddAsOverride(formlistGetter);
-                    foreach (var index in itemsToRemove)
+                    // Remove in descending order to prevent index invalidation
+                    foreach (var index in itemsToRemove.OrderByDescending(x => x))
                     {
                         formlistOverride.Items.RemoveAt(index);
                     }
