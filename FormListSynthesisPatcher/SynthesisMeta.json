@@ -1,0 +1,21 @@
+{
+  "Nickname": "FormListSynthesisPatcher",
+  "Visibility": "Visible",
+  "OneLineDescription": "FormList Synthesis Patcher",
+  "LongDescription": "Massively removes forms from FormLists in selected plugins using EditorID-based search",
+  "PreferredAutoVersioning": "Default",
+  "RequiredMods": [],
+  "TargetedReleases": [
+    "Oblivion",
+    "SkyrimLE",
+    "SkyrimSE",
+    "SkyrimVR",
+    "Fallout4",
+    "EnderalLE",
+    "EnderalSE",
+    "SkyrimSEGog",
+    "Starfield",
+    "Fallout4VR",
+    "OblivionRE"
+  ]
+}
