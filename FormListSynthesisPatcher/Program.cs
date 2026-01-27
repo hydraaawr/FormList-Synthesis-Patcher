@@ -27,6 +27,7 @@ namespace MissivesSynthesisPatcher
         public static void RunPatch(IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
         {
             var settings = Settings.Value;
+            var removedItems = new List<(string FormlistEditorID, string ItemEditorID, string ItemFormKey)>();
             
             Console.WriteLine($"EditorIDs to remove: {string.Join(", ", settings.EditorIDsToRemove)}");
 
@@ -57,6 +58,7 @@ namespace MissivesSynthesisPatcher
                         if (itemEditorID.Contains(searchPattern, StringComparison.OrdinalIgnoreCase))
                         {
                             Console.WriteLine($"Removing: {itemFormKey} ({itemEditorID})");
+                            removedItems.Add((formlistGetter.EditorID ?? "Unknown", itemEditorID, itemFormKey.ToString()));
                             formlistOverride.Items.RemoveAt(i);
                             removedCount++;
                             break;
@@ -66,6 +68,27 @@ namespace MissivesSynthesisPatcher
 
                 Console.WriteLine($"Items removed: {removedCount}");
                 Console.WriteLine($"Items after: {formlistOverride.Items.Count}");
+            }
+
+            // Print summary
+            Console.WriteLine($"\n{'='} REMOVAL SUMMARY {'='}\n");
+            if (removedItems.Count == 0)
+            {
+                Console.WriteLine("No items were removed.");
+            }
+            else
+            {
+                Console.WriteLine($"Total items removed: {removedItems.Count}\n");
+                var groupedByFormlist = removedItems.GroupBy(x => x.FormlistEditorID);
+                foreach (var group in groupedByFormlist)
+                {
+                    Console.WriteLine($"From formlist '{group.Key}':");
+                    foreach (var item in group)
+                    {
+                        Console.WriteLine($"  - {item.ItemFormKey} ({item.ItemEditorID})");
+                    }
+                    Console.WriteLine();
+                }
             }
         }
     }
