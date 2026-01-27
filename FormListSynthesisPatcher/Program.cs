@@ -6,7 +6,7 @@ namespace MissivesSynthesisPatcher
 {
     public class PatcherSettings
     {
-        public List<string> EditorIDsToRemove { get; set; } = new();
+        public List<string> EditorIdsToRemove { get; set; } = new();
     }
 
     public class Program
@@ -29,7 +29,7 @@ namespace MissivesSynthesisPatcher
             var settings = Settings.Value;
             var removedItems = new List<(string FormlistEditorID, string ItemEditorID, string ItemFormKey)>();
             
-            Console.WriteLine($"EditorIDs to remove: {string.Join(", ", settings.EditorIDsToRemove)}");
+            Console.WriteLine($"EditorIDs to remove: {string.Join(", ", settings.EditorIdsToRemove)}");
 
             foreach (var formlistGetter in state.LoadOrder.PriorityOrder.FormList().WinningOverrides())
             {
@@ -53,7 +53,7 @@ namespace MissivesSynthesisPatcher
                     var itemRecord = state.LinkCache.Resolve(itemFormKey);
                     var itemEditorID = itemRecord.EditorID ?? "";
 
-                    foreach (var searchPattern in settings.EditorIDsToRemove)
+                    foreach (var searchPattern in settings.EditorIdsToRemove)
                     {
                         if (itemEditorID.Contains(searchPattern, StringComparison.OrdinalIgnoreCase))
                         {
