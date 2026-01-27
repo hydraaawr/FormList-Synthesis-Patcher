@@ -87,7 +87,7 @@ namespace MissivesSynthesisPatcher
                 if (removedCount > 0)
                 {
                     var formlistOverride = state.PatchMod.FormLists.GetOrAddAsOverride(formlistGetter);
-                    foreach (var index in itemsToRemove)
+                    foreach (var index in itemsToRemove.OrderByDescending(x => x))
                     {
                         formlistOverride.Items.RemoveAt(index);
                     }
