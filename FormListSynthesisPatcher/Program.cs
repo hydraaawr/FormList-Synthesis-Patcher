@@ -4,9 +4,15 @@ using Mutagen.Bethesda.Skyrim;
 
 namespace MissivesSynthesisPatcher
 {
+    public class RemovalRule
+    {
+        public string EditorID { get; set; } = string.Empty;
+        public string? Plugin { get; set; }
+    }
+
     public class PatcherSettings
     {
-        public List<string> EditorIdsToRemove { get; set; } = new();
+        public List<RemovalRule> EditorIdsToRemove { get; set; } = new();
     }
 
     public class Program
@@ -29,7 +35,12 @@ namespace MissivesSynthesisPatcher
             var settings = Settings.Value;
             var removedItems = new List<(string FormlistEditorID, string ItemEditorID, string ItemFormKey)>();
             
-            Console.WriteLine($"EditorIDs to remove: {string.Join(", ", settings.EditorIdsToRemove)}");
+            Console.WriteLine($"Rules to apply: {settings.EditorIdsToRemove.Count}");
+            foreach (var rule in settings.EditorIdsToRemove)
+            {
+                var pluginInfo = rule.Plugin != null ? $" from plugin '{rule.Plugin}'" : "";
+                Console.WriteLine($"  - EditorID: {rule.EditorID}{pluginInfo}");
+            }
 
             foreach (var formlistGetter in state.LoadOrder.PriorityOrder.FormList().WinningOverrides())
             {
@@ -52,12 +63,16 @@ namespace MissivesSynthesisPatcher
                     var itemFormKey = formlistGetter.Items[i].FormKey;
                     var itemRecord = state.LinkCache.Resolve(itemFormKey);
                     var itemEditorID = itemRecord.EditorID ?? "";
+                    var itemPlugin = itemFormKey.ModKey.FileName.String;
 
-                    foreach (var searchPattern in settings.EditorIdsToRemove)
+                    foreach (var rule in settings.EditorIdsToRemove)
                     {
-                        if (itemEditorID.Contains(searchPattern, StringComparison.OrdinalIgnoreCase))
+                        bool editorIdMatches = itemEditorID.Contains(rule.EditorID, StringComparison.OrdinalIgnoreCase);
+                        bool pluginMatches = rule.Plugin == null || itemPlugin.Equals(rule.Plugin, StringComparison.OrdinalIgnoreCase);
+
+                        if (editorIdMatches && pluginMatches)
                         {
-                            Console.WriteLine($"Removing: {itemFormKey} ({itemEditorID})");
+                            Console.WriteLine($"Removing: {itemFormKey} ({itemEditorID}) from plugin '{itemPlugin}'");
                             removedItems.Add((formlistGetter.EditorID ?? "Unknown", itemEditorID, itemFormKey.ToString()));
                             itemsToRemove.Add(i);
                             removedCount++;
