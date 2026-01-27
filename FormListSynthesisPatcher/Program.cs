@@ -33,23 +33,23 @@ namespace MissivesSynthesisPatcher
 
             foreach (var formlistGetter in state.LoadOrder.PriorityOrder.FormList().WinningOverrides())
             {
-                var formlistOverride = state.PatchMod.FormLists.GetOrAddAsOverride(formlistGetter);
-
                 Console.WriteLine($"\nProcessing formlist: {formlistGetter.EditorID}");
-                Console.WriteLine($"Items before: {formlistOverride.Items.Count}");
+                Console.WriteLine($"Items before: {formlistGetter.Items.Count}");
 
-                for (int i = 0; i < formlistOverride.Items.Count; i++)
+                for (int i = 0; i < formlistGetter.Items.Count; i++)
                 {
-                    var itemFormKey = formlistOverride.Items[i].FormKey;
+                    var itemFormKey = formlistGetter.Items[i].FormKey;
                     var itemRecord = state.LinkCache.Resolve(itemFormKey);
                     var itemEditorID = itemRecord.EditorID ?? "";
                     Console.WriteLine($"  {i}: {itemFormKey} ({itemEditorID})");
                 }
 
                 int removedCount = 0;
-                for (int i = formlistOverride.Items.Count - 1; i >= 0; i--)
+                var itemsToRemove = new List<int>();
+                
+                for (int i = formlistGetter.Items.Count - 1; i >= 0; i--)
                 {
-                    var itemFormKey = formlistOverride.Items[i].FormKey;
+                    var itemFormKey = formlistGetter.Items[i].FormKey;
                     var itemRecord = state.LinkCache.Resolve(itemFormKey);
                     var itemEditorID = itemRecord.EditorID ?? "";
 
@@ -59,15 +59,24 @@ namespace MissivesSynthesisPatcher
                         {
                             Console.WriteLine($"Removing: {itemFormKey} ({itemEditorID})");
                             removedItems.Add((formlistGetter.EditorID ?? "Unknown", itemEditorID, itemFormKey.ToString()));
-                            formlistOverride.Items.RemoveAt(i);
+                            itemsToRemove.Add(i);
                             removedCount++;
                             break;
                         }
                     }
                 }
 
+                if (removedCount > 0)
+                {
+                    var formlistOverride = state.PatchMod.FormLists.GetOrAddAsOverride(formlistGetter);
+                    foreach (var index in itemsToRemove)
+                    {
+                        formlistOverride.Items.RemoveAt(index);
+                    }
+                }
+
                 Console.WriteLine($"Items removed: {removedCount}");
-                Console.WriteLine($"Items after: {formlistOverride.Items.Count}");
+                Console.WriteLine($"Items after: {formlistGetter.Items.Count - removedCount}");
             }
 
             // Print summary
