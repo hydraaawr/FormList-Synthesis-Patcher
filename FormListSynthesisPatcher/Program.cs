@@ -7,7 +7,7 @@ namespace MissivesSynthesisPatcher
     public class RemovalRule
     {
         public string EditorID { get; set; } = string.Empty;
-        public string? Plugin { get; set; }
+        public List<string>? Plugins { get; set; }
     }
 
     public class PatcherSettings
@@ -38,7 +38,9 @@ namespace MissivesSynthesisPatcher
             Console.WriteLine($"Rules to apply: {settings.EditorIdsToRemove.Count}");
             foreach (var rule in settings.EditorIdsToRemove)
             {
-                var pluginInfo = rule.Plugin != null ? $" from plugin '{rule.Plugin}'" : "";
+                var pluginInfo = rule.Plugins != null && rule.Plugins.Count > 0 
+                    ? $" from plugins: {string.Join(", ", rule.Plugins)}"
+                    : "";
                 Console.WriteLine($"  - EditorID: {rule.EditorID}{pluginInfo}");
             }
 
@@ -68,7 +70,8 @@ namespace MissivesSynthesisPatcher
                     foreach (var rule in settings.EditorIdsToRemove)
                     {
                         bool editorIdMatches = itemEditorID.Contains(rule.EditorID, StringComparison.OrdinalIgnoreCase);
-                        bool pluginMatches = rule.Plugin == null || itemPlugin.Equals(rule.Plugin, StringComparison.OrdinalIgnoreCase);
+                        bool pluginMatches = rule.Plugins == null || rule.Plugins.Count == 0 || 
+                            rule.Plugins.Any(p => itemPlugin.Equals(p, StringComparison.OrdinalIgnoreCase));
 
                         if (editorIdMatches && pluginMatches)
                         {
