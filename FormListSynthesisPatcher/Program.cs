@@ -6,7 +6,7 @@ namespace MissivesSynthesisPatcher
 {
     public class PatcherSettings
     {
-        public List<string> FormIDsToRemove { get; set; } = new();
+        public List<string> EditorIDsToRemove { get; set; } = new();
     }
 
     public class Program
@@ -27,24 +27,8 @@ namespace MissivesSynthesisPatcher
         public static void RunPatch(IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
         {
             var settings = Settings.Value;
-            var formKeysToRemove = new HashSet<Mutagen.Bethesda.Plugins.FormKey>();
             
-            Console.WriteLine($"FormIDs to remove: {string.Join(", ", settings.FormIDsToRemove)}");
-            
-            foreach (var formIdStr in settings.FormIDsToRemove)
-            {
-                if (Mutagen.Bethesda.Plugins.FormKey.TryFactory(formIdStr, out var formKey))
-                {
-                    formKeysToRemove.Add(formKey);
-                    Console.WriteLine($"Parsed FormID: {formIdStr} -> {formKey}");
-                }
-                else
-                {
-                    Console.WriteLine($"ERROR: Could not parse FormID: {formIdStr}");
-                }
-            }
-
-            Console.WriteLine($"Total FormKeys to remove: {formKeysToRemove.Count}");
+            Console.WriteLine($"EditorIDs to remove: {string.Join(", ", settings.EditorIDsToRemove)}");
 
             foreach (var formlistGetter in state.LoadOrder.PriorityOrder.FormList().WinningOverrides())
             {
@@ -55,18 +39,28 @@ namespace MissivesSynthesisPatcher
 
                 for (int i = 0; i < formlistOverride.Items.Count; i++)
                 {
-                    Console.WriteLine($"  {i}: {formlistOverride.Items[i].FormKey}");
+                    var itemFormKey = formlistOverride.Items[i].FormKey;
+                    var itemRecord = state.LinkCache.Resolve(itemFormKey);
+                    var itemEditorID = itemRecord.EditorID ?? "";
+                    Console.WriteLine($"  {i}: {itemFormKey} ({itemEditorID})");
                 }
 
                 int removedCount = 0;
                 for (int i = formlistOverride.Items.Count - 1; i >= 0; i--)
                 {
                     var itemFormKey = formlistOverride.Items[i].FormKey;
-                    if (formKeysToRemove.Contains(itemFormKey))
+                    var itemRecord = state.LinkCache.Resolve(itemFormKey);
+                    var itemEditorID = itemRecord.EditorID ?? "";
+
+                    foreach (var searchPattern in settings.EditorIDsToRemove)
                     {
-                        Console.WriteLine($"Removing: {itemFormKey}");
-                        formlistOverride.Items.RemoveAt(i);
-                        removedCount++;
+                        if (itemEditorID.Contains(searchPattern, StringComparison.OrdinalIgnoreCase))
+                        {
+                            Console.WriteLine($"Removing: {itemFormKey} ({itemEditorID})");
+                            formlistOverride.Items.RemoveAt(i);
+                            removedCount++;
+                            break;
+                        }
                     }
                 }
 
